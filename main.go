@@ -9,13 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var users = make(map[string]string) // key: username, value: password
-
 func main() {
+	InitDB()
 	start()
 }
 
 func start() {
+	defer DB.Close()
 	for {
 		fmt.Println("\nChoose action:")
 		fmt.Println("1. Registrer")
@@ -46,10 +46,13 @@ func register() {
 	scanner.Scan()
 	username := strings.TrimSpace(scanner.Text())
 
-	// This is map lookup  we ignore the value with _ if the is a value then exists = true and we execute the code {}
-	if _, exists := users[username]; exists {
+	if _, exists, err := getUser(username); err != nil {
+		fmt.Printf("Error checking username %v\n", err)
+		return
+	} else if exists {
 		fmt.Printf("The username \"%s\" is already taken.\n", username)
-	} else {
+		return
+	} else { // If username doesn't exists
 		fmt.Print("Write your password: ")
 		scanner.Scan()
 		password := strings.TrimSpace(scanner.Text())
@@ -59,14 +62,17 @@ func register() {
 			fmt.Printf("An error occurred while hashing the password: %v\n", err)
 			return
 		}
-		users[username] = hashedPassword
-		//fmt.Println("HashedPassword", hashedPassword)
+
+		err = registerUser(username, hashedPassword)
+		if err != nil {
+			fmt.Printf("Error registering user: %v\n", err)
+			return
+		}
 		fmt.Println("User created successfully")
 	}
 }
 
 func login() {
-
 	var attempts int
 	fmt.Print("Write your username: ")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -77,17 +83,23 @@ func login() {
 		scanner.Scan()
 		password := strings.TrimSpace(scanner.Text())
 
-		if hashedPassword, exists := users[username]; exists {
-			if passwordVerification(hashedPassword, password) {
-				fmt.Println("Login was successful")
-				break
-			} else {
-				attempts++
-				fmt.Printf("Wrong password! You have %d/3 attempts left\n", attempts)
-			}
-		} else {
-			fmt.Println("User doesn't exist")
+		hashedPassword, exists, err := getUser(username)
+		if err != nil {
+			fmt.Printf("Error checking user: %v\n", err)
+			return
 		}
+		if !exists {
+			fmt.Println("User doesn't exist")
+			return
+		}
+		if passwordVerification(hashedPassword, password) {
+			fmt.Println("Login was successful")
+			return
+		} else {
+			attempts++
+			fmt.Printf("Wrong password! You have %d/3 attempts left\n", attempts)
+		}
+
 	}
 	if attempts == 3 {
 		fmt.Println("Too many failed attempts. Please try again later")
