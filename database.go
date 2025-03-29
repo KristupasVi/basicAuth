@@ -48,7 +48,9 @@ func createUserTable() {
 		CREATE TABLE IF NOT EXISTS users(
 			id SERIAL PRIMARY KEY,
 			username VARCHAR(20) UNIQUE NOT NULL,
+			email VARCHAR(70) UNIQUE NOT NULL,
 			password VARCHAR(70) NOT NULL
+
 		)
 	`
 	_, err := DB.Exec(query)
@@ -57,13 +59,13 @@ func createUserTable() {
 	}
 }
 
-func registerUser(username, hashedPassword string) error {
-	query := "INSERT INTO users (username, password) VALUES ($1, $2)"
-	_, err := DB.Exec(query, username, hashedPassword)
+func registerUser(username, email, hashedPassword string) error {
+	query := "INSERT INTO users (username,email, password) VALUES ($1, $2, $3)"
+	_, err := DB.Exec(query, username, email, hashedPassword)
 	return err
 }
 
-func getUser(username string) (string, bool, error) {
+func getUserByName(username string) (string, bool, error) {
 	var hashedPassword string
 	// QueryRow doesn't give me any data it prepares the row and waits for extraction .Scan is how the data is pulled out of that row
 	err := DB.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
@@ -72,7 +74,20 @@ func getUser(username string) (string, bool, error) {
 		return "", false, nil
 	}
 	if err != nil {
+		return "", false, err
+	}
+	return hashedPassword, true, nil
+}
+
+func getUserByEmail(email string) (string, bool, error) {
+	var hashedPassword string
+
+	err := DB.QueryRow("SELECT password FROM users WHERE email = $1", email).Scan(&hashedPassword)
+	if err == sql.ErrNoRows {
 		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
 	}
 	return hashedPassword, true, nil
 }
