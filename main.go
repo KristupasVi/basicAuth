@@ -50,47 +50,48 @@ func register() {
 	u := user{}
 
 	// Username Logic
-	fmt.Print("Enter your username: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	u.username = strings.TrimSpace(scanner.Text())
-
-	checkIfBlank(u.username, "Enter your username: ")
+	// fmt.Print("Enter your username: ")
+	// scanner := bufio.NewScanner(os.Stdin)
+	// scanner.Scan()
+	// u.username = strings.TrimSpace(scanner.Text())
+	// checkIfBlank(u.username, "Enter your username: ")
+	u.username = fieldScan("Enter your username: ")
 
 	var existsUsername bool
 	var err error
-
 	if _, existsUsername, err = getUserByName(u.username); err != nil {
 		fmt.Printf("Error checking username %v\n", err)
 		return
 	} else if existsUsername {
-		fmt.Printf("The username \"%s\" is already taken.\n", u.username)
+		fmt.Printf("This username \"%s\" already taken.\n", u.username)
 		return
 	}
 
 	// Email Logic
-	fmt.Print("Enter your email: ")
-	scanner.Scan()
-	u.email = strings.TrimSpace(scanner.Text())
+	// fmt.Print("Enter your email: ")
+	// scanner.Scan()
+	// u.email = strings.TrimSpace(scanner.Text())
 
-	checkIfBlank(u.email, "Enter your email: ")
+	// checkIfBlank(u.email, "Enter your email: ")
+	u.email = fieldScan("Enter your email: ")
 
 	var existsEmail bool
 
 	if _, existsEmail, err = getUserByEmail(u.email); err != nil {
 		fmt.Printf("Error checking email %v\n", err)
 	} else if existsEmail {
-		fmt.Printf("The email \"%s\" is already exists", u.email)
+		fmt.Printf("This email \"%s\" already exists", u.email)
+		return
 	}
 
 	// Password logic
 	if !existsUsername && !existsEmail {
-		fmt.Print("Enter your password: ")
-		scanner.Scan()
-		password := strings.TrimSpace(scanner.Text())
+		// fmt.Print("Enter your password: ")
+		// scanner.Scan()
+		// password := strings.TrimSpace(scanner.Text())
 
-		checkIfBlank(password, "Enter your password: ")
-
+		// checkIfBlank(password, "Enter your password: ")
+		password := fieldScan("Enter your password: ")
 		// Pasword hashing
 		hashedPassword, err := passwordHash(password)
 		if err != nil {
@@ -112,25 +113,21 @@ func login() {
 	var attempts int
 	const maxAttempts = 3
 
-	fmt.Print("Enter your username or email: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	identifier := strings.TrimSpace(scanner.Text())
+	// fmt.Print("Enter your username or email: ")
+	// scanner := bufio.NewScanner(os.Stdin)
+	// scanner.Scan()
+	// identifier := strings.TrimSpace(scanner.Text())
+	// checkIfBlank(identifier, "Enter your username or email: ")
 
-	checkIfBlank(identifier, "Enter your username or email: ")
+	identifier := fieldScan("Enter your username or email: ")
 
 	for i := attempts; i < maxAttempts; i++ {
-		fmt.Print("Enter your password: ")
-		scanner.Scan()
-		password := strings.TrimSpace(scanner.Text())
+		// fmt.Print("Enter your password: ")
+		// scanner.Scan()
+		// password := strings.TrimSpace(scanner.Text())
+		// checkIfBlank(password, "Enter your password: ")
 
-		if password == "" {
-			fmt.Println("Password cannot be empty")
-			continue
-		}
-
-		//
-
+		password := fieldScan("Enter your passowrd: ")
 		var hashedPassword string
 		var exists bool
 		var err error
@@ -167,17 +164,6 @@ func login() {
 	}
 }
 
-func checkIfBlank(field, message string) string {
-	for field == "" {
-		fmt.Println("This field cannot be empty")
-		fmt.Print(message)
-		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		field = strings.TrimSpace(scanner.Text())
-	}
-	return field
-}
-
 // Hashing user passwordInput register stage
 func passwordHash(password string) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -192,4 +178,27 @@ func passwordHash(password string) (string, error) {
 func passwordVerification(hashedPassword, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+// Checks if the data provided was empty string in a field
+func checkIfBlank(field, message string) string {
+	for field == "" {
+		fmt.Println("This field cannot be empty")
+		fmt.Print(message)
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		field = strings.TrimSpace(scanner.Text())
+	}
+	return field
+}
+
+// // When incorrect data is provided, the field repeats so the user can input the correct data.
+func fieldScan(fieldText string) string {
+	fmt.Print(fieldText)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	fieldInput := strings.TrimSpace(scanner.Text())
+	fieldInput = checkIfBlank(fieldInput, fieldText)
+	fmt.Println("Fieldassss", fieldInput)
+	return fieldInput
 }
