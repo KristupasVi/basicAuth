@@ -47,7 +47,7 @@ func createUserTable() {
 	query := `
 		CREATE TABLE IF NOT EXISTS users(
 			id SERIAL PRIMARY KEY,
-			username VARCHAR(20) UNIQUE NOT NULL,
+			username VARCHAR(25) UNIQUE NOT NULL,
 			email VARCHAR(70) UNIQUE NOT NULL,
 			password VARCHAR(70) NOT NULL
 
